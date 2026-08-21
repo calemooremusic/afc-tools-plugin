@@ -24,11 +24,12 @@ public class AfcPluginPanel extends PluginPanel
     private final AfcToolsConfig config;
     private final JPanel pvpContainer;
     private final JPanel gearContainer;
+    private final JPanel settingsContainer;
     private final Map<String, JPanel> fightBoxes = new HashMap<>();
 
     private JLabel ticketsLabel;
     private JLabel lootLabel;
-    private JLabel fallsLabel; // Added the falls label
+    private JLabel fallsLabel;
 
     public AfcPluginPanel(AfcToolsConfig config)
     {
@@ -76,14 +77,10 @@ public class AfcPluginPanel extends PluginPanel
 
         // --- AFC RUNNER SETTINGS SECTION ---
         JPanel settingsBox = createBaseBox("AFC Runner Settings");
-        JPanel settingsItems = new JPanel(new GridLayout(0, 1, 0, 4));
-        settingsItems.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        addItem(settingsItems, "Entity Hider: ON");
-        addItem(settingsItems, "Auto-Retaliate: OFF");
-        addItem(settingsItems, "Player Attack: Right-Click / Hidden");
-        addItem(settingsItems, "NPC Attack: Hidden");
-        addItem(settingsItems, "Skull Prevention: OFF");
-        settingsBox.add(settingsItems, BorderLayout.CENTER);
+        settingsContainer = new JPanel(new GridLayout(0, 1, 0, 4));
+        settingsContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        settingsBox.add(settingsContainer, BorderLayout.CENTER);
+        rebuildSettingsList();
         add(settingsBox);
         add(createSpacer());
 
@@ -98,7 +95,7 @@ public class AfcPluginPanel extends PluginPanel
         statusItems.add(ticketsLabel);
 
         lootLabel = new JLabel("Looting Bag: 0 gp");
-        lootLabel.setForeground(Color.RED); // Start red because they haven't paid off the 150k yet
+        lootLabel.setForeground(Color.RED);
         lootLabel.setFont(FontManager.getRunescapeSmallFont());
         statusItems.add(lootLabel);
 
@@ -150,6 +147,26 @@ public class AfcPluginPanel extends PluginPanel
         gearContainer.repaint();
     }
 
+    public void rebuildSettingsList()
+    {
+        settingsContainer.removeAll();
+        String rawList = config.customSettingsList();
+        if (rawList != null && !rawList.trim().isEmpty())
+        {
+            String[] items = rawList.split("[\n,]");
+            for (String item : items)
+            {
+                String trimmed = item.trim();
+                if (!trimmed.isEmpty())
+                {
+                    addItem(settingsContainer, trimmed);
+                }
+            }
+        }
+        settingsContainer.revalidate();
+        settingsContainer.repaint();
+    }
+
     private JPanel createBaseBox(String titleText)
     {
         JPanel box = new JPanel(new BorderLayout());
@@ -198,7 +215,6 @@ public class AfcPluginPanel extends PluginPanel
     {
         lootLabel.setText("Looting Bag: " + String.format("%,d gp", value));
 
-        // Color-coding based on your risk thresholds
         if (value < 150000)
         {
             lootLabel.setForeground(Color.RED);
