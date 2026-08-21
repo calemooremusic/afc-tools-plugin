@@ -28,6 +28,7 @@ public class AfcPluginPanel extends PluginPanel
 
     private JLabel ticketsLabel;
     private JLabel lootLabel;
+    private JLabel fallsLabel; // Added the falls label
 
     public AfcPluginPanel(AfcToolsConfig config)
     {
@@ -97,9 +98,14 @@ public class AfcPluginPanel extends PluginPanel
         statusItems.add(ticketsLabel);
 
         lootLabel = new JLabel("Looting Bag: 0 gp");
-        lootLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        lootLabel.setForeground(Color.RED); // Start red because they haven't paid off the 150k yet
         lootLabel.setFont(FontManager.getRunescapeSmallFont());
         statusItems.add(lootLabel);
+
+        fallsLabel = new JLabel("Session Falls: 0");
+        fallsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        fallsLabel.setFont(FontManager.getRunescapeSmallFont());
+        statusItems.add(fallsLabel);
 
         statusBox.add(statusItems, BorderLayout.CENTER);
         add(statusBox);
@@ -183,9 +189,28 @@ public class AfcPluginPanel extends PluginPanel
         ticketsLabel.setText("Dispenser Tickets: " + count);
     }
 
+    public void updateFallCount(int count)
+    {
+        fallsLabel.setText("Session Falls: " + count);
+    }
+
     public void updateLootValue(long value)
     {
         lootLabel.setText("Looting Bag: " + String.format("%,d gp", value));
+
+        // Color-coding based on your risk thresholds
+        if (value < 150000)
+        {
+            lootLabel.setForeground(Color.RED);
+        }
+        else if (value >= 1500000)
+        {
+            lootLabel.setForeground(Color.ORANGE);
+        }
+        else
+        {
+            lootLabel.setForeground(Color.WHITE);
+        }
     }
 
     public void updatePvPStats(String opponentName, int damageDealt, int damageTaken, int world)
