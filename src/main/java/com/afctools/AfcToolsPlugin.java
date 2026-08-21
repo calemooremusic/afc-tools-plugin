@@ -16,6 +16,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -82,6 +83,7 @@ public class AfcToolsPlugin extends Plugin
 		sessionFalls = 0;
 
 		panel = new AfcPluginPanel(config);
+
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
 
 		ticketLootManager.setPluginPanel(panel);
@@ -95,12 +97,8 @@ public class AfcToolsPlugin extends Plugin
 				.build();
 
 		clientToolbar.addNavigation(navButton);
-
-		// Register event listeners
 		eventBus.register(ticketLootManager);
 		eventBus.register(pkLogManager);
-
-		// Turn on the tile markers
 		overlayManager.add(tileMarkerOverlay);
 	}
 
@@ -111,18 +109,35 @@ public class AfcToolsPlugin extends Plugin
 		sessionFalls = 0;
 
 		clientToolbar.removeNavigation(navButton);
-
-		// Unregister event listeners
 		eventBus.unregister(ticketLootManager);
 		eventBus.unregister(pkLogManager);
-
-		// Turn off the tile markers
 		overlayManager.remove(tileMarkerOverlay);
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (event.getGroup().equals("afctools") && panel != null)
+		{
+			if (event.getKey().equals("customGearList"))
+			{
+				panel.rebuildGearList();
+			}
+			else if (event.getKey().equals("customSettingsList"))
+			{
+				panel.rebuildSettingsList();
+			}
+		}
 	}
 
 	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
+		if (!config.fallTrackerEnabled())
+		{
+			return;
+		}
+
 		if (event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM)
 		{
 			String message = Text.removeTags(event.getMessage()).toLowerCase();

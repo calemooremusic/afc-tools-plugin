@@ -28,10 +28,22 @@ public interface AfcToolsConfig extends Config
 	}
 
 	@ConfigItem(
+			keyName = "customSettingsList",
+			name = "Custom Settings List",
+			description = "Enter custom runner settings separated by commas or newlines",
+			section = checklistSection,
+			position = 2
+	)
+	default String customSettingsList()
+	{
+		return "Entity Hider: ON\nAuto-Retaliate: OFF\nPlayer Attack: Right-Click / Hidden\nNPC Attack: Hidden\nSkull Prevention: OFF";
+	}
+
+	@ConfigItem(
 			keyName = "tileMarkerEnabled",
 			name = "Enable Course Tile Markers",
 			description = "Highlights key Wilderness Agility course tiles",
-			position = 2
+			position = 3
 	)
 	default boolean tileMarkerEnabled()
 	{
@@ -42,9 +54,20 @@ public interface AfcToolsConfig extends Config
 			keyName = "pkLogEnabled",
 			name = "Enable PvP Tracker",
 			description = "Tracks damage dealt/taken against opponents",
-			position = 3
+			position = 4
 	)
 	default boolean pkLogEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			keyName = "fallTrackerEnabled",
+			name = "Enable Fall Tracker",
+			description = "Tracks and displays agility course falls",
+			position = 5
+	)
+	default boolean fallTrackerEnabled()
 	{
 		return true;
 	}
