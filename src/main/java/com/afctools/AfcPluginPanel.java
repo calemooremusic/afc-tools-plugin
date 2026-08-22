@@ -108,6 +108,60 @@ public class AfcPluginPanel extends PluginPanel
         add(statusBox);
         add(createSpacer());
 
+        // --- SAFE BANKING GUIDE (DROPDOWN) ---
+        JPanel bankingBox = new JPanel(new BorderLayout());
+        bankingBox.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        bankingBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
+                new EmptyBorder(8, 8, 8, 8)
+        ));
+
+        // Clickable header for the dropdown
+        JPanel bankingHeader = new JPanel(new BorderLayout());
+        bankingHeader.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        bankingHeader.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        JLabel bankingTitle = new JLabel("Safe Solo Banking Guide ▾");
+        bankingTitle.setForeground(Color.WHITE);
+        bankingTitle.setFont(FontManager.getRunescapeSmallFont());
+        bankingHeader.add(bankingTitle, BorderLayout.CENTER);
+        bankingBox.add(bankingHeader, BorderLayout.NORTH);
+
+        // Hidden content panel
+        JPanel bankingContent = new JPanel(new BorderLayout());
+        bankingContent.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        bankingContent.setBorder(new EmptyBorder(8, 0, 0, 0));
+
+        JLabel bankingText = new JLabel("<html>" +
+                "1. Hop to a random world<br>" +
+                "2. Leave the Friends Chat (FC)<br>" +
+                "3. Hop worlds again<br>" +
+                "4. Travel to the bank safely" +
+                "</html>");
+        bankingText.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        bankingText.setFont(FontManager.getRunescapeSmallFont());
+        bankingContent.add(bankingText, BorderLayout.CENTER);
+        bankingContent.setVisible(false); // Hides the text by default
+
+        bankingBox.add(bankingContent, BorderLayout.CENTER);
+
+        // Click event to toggle the dropdown
+        bankingHeader.addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                boolean isVisible = bankingContent.isVisible();
+                bankingContent.setVisible(!isVisible); // Flip visibility
+                bankingTitle.setText(isVisible ? "Safe Solo Banking Guide ▾" : "Safe Solo Banking Guide ▴");
+                bankingBox.revalidate();
+                bankingBox.repaint();
+            }
+        });
+
+        add(bankingBox);
+        add(createSpacer());
+
         // --- PVP TRACKER SECTION ---
         JPanel pvpBox = createBaseBox("PvP Encounters");
         pvpContainer = new JPanel();
@@ -203,7 +257,35 @@ public class AfcPluginPanel extends PluginPanel
 
     public void updateTickets(int count)
     {
-        ticketsLabel.setText("Dispenser Tickets: " + count);
+        if (count > 0)
+        {
+            int bankedXp = calculateTicketXp(count);
+            ticketsLabel.setText("Dispenser Tickets: " + count + " (" + String.format("%,d XP", bankedXp) + ")");
+
+            // Turn the text green when they hit the max XP multiplier bracket
+            if (count >= 101)
+            {
+                ticketsLabel.setForeground(Color.GREEN);
+            }
+            else
+            {
+                ticketsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+            }
+        }
+        else
+        {
+            ticketsLabel.setText("Dispenser Tickets: 0");
+            ticketsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        }
+    }
+
+    private int calculateTicketXp(int tickets)
+    {
+        if (tickets <= 0) return 0;
+        if (tickets <= 10) return tickets * 200;
+        if (tickets <= 50) return tickets * 210;
+        if (tickets <= 100) return tickets * 220;
+        return tickets * 230; // 15% Max Boost for 101+ tickets
     }
 
     public void updateFallCount(int count)
