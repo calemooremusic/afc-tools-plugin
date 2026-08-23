@@ -24,7 +24,7 @@ public interface AfcToolsConfig extends Config
 	)
 	default String customGearList()
 	{
-		return "Skullable Ranged gear\nXbow and ammo\nPhoenix necklace\nPots/food\nAnti Venom\nKnife\nLooting bag\n150k for gate";
+		return "<font color='red'>Destroy looting bag in bank</font>\nSkullable Ranged gear\nXbow and ammo\nPhoenix necklace\nPots/food\nAnti Venom\nKnife\n150k for gate";
 	}
 
 	@ConfigItem(
@@ -36,7 +36,7 @@ public interface AfcToolsConfig extends Config
 	)
 	default String customSettingsList()
 	{
-		return "Entity Hider: ON\nAuto-Retaliate: OFF\nPlayer Attack: Right-Click / Hidden\nNPC Attack: Hidden\nSkull Prevention: OFF";
+		return "Entity Hider: ON";
 	}
 
 	@ConfigItem(
@@ -70,5 +70,16 @@ public interface AfcToolsConfig extends Config
 	default boolean fallTrackerEnabled()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+			keyName = "streamerModeLoot",
+			name = "Streamer Mode: Hide Loot",
+			description = "Hides the looting bag value in the panel to prevent stream sniping",
+			position = 6
+	)
+	default boolean streamerModeLoot()
+	{
+		return false;
 	}
 }

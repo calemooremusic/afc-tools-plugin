@@ -27,10 +27,17 @@ public class PkLogManager
 	private AfcPluginPanel pluginPanel;
 	private Player lastAttacker;
 	private final Map<String, int[]> fightStats = new HashMap<>();
+	private long fallImmunityTime = 0;
 
 	public void setPluginPanel(AfcPluginPanel pluginPanel)
 	{
 		this.pluginPanel = pluginPanel;
+	}
+
+	public void triggerFallImmunity()
+	{
+		// Give the player 3 seconds of immunity from PvP damage logging when they fall
+		fallImmunityTime = System.currentTimeMillis();
 	}
 
 	@Subscribe
@@ -44,7 +51,7 @@ public class PkLogManager
 			}
 			else
 			{
-				lastAttacker = null; // Strictly ignore NPCs
+				lastAttacker = null;
 			}
 		}
 	}
@@ -62,7 +69,12 @@ public class PkLogManager
 		// 1. We TOOK damage
 		if (actor == client.getLocalPlayer())
 		{
-			// Ensure it was a player that attacked us
+			// Ignore damage if we recently fell into a pit
+			if (System.currentTimeMillis() - fallImmunityTime < 3000)
+			{
+				return;
+			}
+
 			if (lastAttacker != null)
 			{
 				addDamage(lastAttacker.getName(), 0, hitsplat.getAmount());
@@ -71,7 +83,6 @@ public class PkLogManager
 		// 2. We DEALT damage TO another player
 		else if (actor instanceof Player && actor != client.getLocalPlayer())
 		{
-			// Ensure the hitsplat belongs to our local player
 			if (hitsplat.isMine())
 			{
 				addDamage(((Player) actor).getName(), hitsplat.getAmount(), 0);
