@@ -31,6 +31,11 @@ public class AfcPluginPanel extends PluginPanel
     private JLabel lootLabel;
     private JLabel fallsLabel;
 
+    private JLabel autoRetaliateLabel;
+    private JLabel playerAttackLabel;
+    private JLabel npcAttackLabel;
+    private JLabel skullPreventionLabel;
+
     public AfcPluginPanel(AfcToolsConfig config)
     {
         super();
@@ -75,8 +80,37 @@ public class AfcPluginPanel extends PluginPanel
         add(gearBox);
         add(createSpacer());
 
-        // --- AFC RUNNER SETTINGS SECTION ---
-        JPanel settingsBox = createBaseBox("AFC Runner Settings");
+        // --- REQUIRED SETTINGS CHECK SECTION ---
+        JPanel liveStatusBox = createBaseBox("Required Settings Check");
+        JPanel liveStatusContainer = new JPanel(new GridLayout(0, 1, 0, 4));
+        liveStatusContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
+        autoRetaliateLabel = new JLabel("- Auto-Retaliate: Unknown");
+        autoRetaliateLabel.setFont(FontManager.getRunescapeSmallFont());
+        autoRetaliateLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        liveStatusContainer.add(autoRetaliateLabel);
+
+        playerAttackLabel = new JLabel("- Player Attack: Unknown");
+        playerAttackLabel.setFont(FontManager.getRunescapeSmallFont());
+        playerAttackLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        liveStatusContainer.add(playerAttackLabel);
+
+        npcAttackLabel = new JLabel("- NPC Attack: Unknown");
+        npcAttackLabel.setFont(FontManager.getRunescapeSmallFont());
+        npcAttackLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        liveStatusContainer.add(npcAttackLabel);
+
+        skullPreventionLabel = new JLabel("- Skull Prevention: Unknown");
+        skullPreventionLabel.setFont(FontManager.getRunescapeSmallFont());
+        skullPreventionLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        liveStatusContainer.add(skullPreventionLabel);
+
+        liveStatusBox.add(liveStatusContainer, BorderLayout.CENTER);
+        add(liveStatusBox);
+        add(createSpacer());
+
+        // --- CUSTOM SETTINGS SECTION ---
+        JPanel settingsBox = createBaseBox("Custom Settings");
         settingsContainer = new JPanel(new GridLayout(0, 1, 0, 4));
         settingsContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         settingsBox.add(settingsContainer, BorderLayout.CENTER);
@@ -116,18 +150,16 @@ public class AfcPluginPanel extends PluginPanel
                 new EmptyBorder(8, 8, 8, 8)
         ));
 
-        // Clickable header for the dropdown
         JPanel bankingHeader = new JPanel(new BorderLayout());
         bankingHeader.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         bankingHeader.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        JLabel bankingTitle = new JLabel("Safe Solo Banking Guide ▾");
+        JLabel bankingTitle = new JLabel("Safe Solo Banking Guide \u25BE");
         bankingTitle.setForeground(Color.WHITE);
         bankingTitle.setFont(FontManager.getRunescapeSmallFont());
         bankingHeader.add(bankingTitle, BorderLayout.CENTER);
         bankingBox.add(bankingHeader, BorderLayout.NORTH);
 
-        // Hidden content panel
         JPanel bankingContent = new JPanel(new BorderLayout());
         bankingContent.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         bankingContent.setBorder(new EmptyBorder(8, 0, 0, 0));
@@ -141,19 +173,18 @@ public class AfcPluginPanel extends PluginPanel
         bankingText.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         bankingText.setFont(FontManager.getRunescapeSmallFont());
         bankingContent.add(bankingText, BorderLayout.CENTER);
-        bankingContent.setVisible(false); // Hides the text by default
+        bankingContent.setVisible(false);
 
         bankingBox.add(bankingContent, BorderLayout.CENTER);
 
-        // Click event to toggle the dropdown
         bankingHeader.addMouseListener(new MouseAdapter()
         {
             @Override
             public void mouseClicked(MouseEvent e)
             {
                 boolean isVisible = bankingContent.isVisible();
-                bankingContent.setVisible(!isVisible); // Flip visibility
-                bankingTitle.setText(isVisible ? "Safe Solo Banking Guide ▾" : "Safe Solo Banking Guide ▴");
+                bankingContent.setVisible(!isVisible);
+                bankingTitle.setText(isVisible ? "Safe Solo Banking Guide \u25BE" : "Safe Solo Banking Guide \u25B4");
                 bankingBox.revalidate();
                 bankingBox.repaint();
             }
@@ -241,7 +272,7 @@ public class AfcPluginPanel extends PluginPanel
 
     private void addItem(JPanel panel, String text)
     {
-        JLabel label = new JLabel("- " + text);
+        JLabel label = new JLabel("<html>- " + text + "</html>");
         label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         label.setFont(FontManager.getRunescapeSmallFont());
         panel.add(label);
@@ -255,6 +286,51 @@ public class AfcPluginPanel extends PluginPanel
         return spacer;
     }
 
+    public void updateLiveSettings(int autoRetalState, int playerAttackState, int npcAttackState, int skullPreventionState)
+    {
+        // Auto-Retaliate: 0 = ON, 1 = OFF
+        if (autoRetalState == 1) {
+            autoRetaliateLabel.setText("- Auto-Retaliate: OFF");
+            autoRetaliateLabel.setForeground(Color.GREEN);
+        } else {
+            autoRetaliateLabel.setText("- Auto-Retaliate: ON");
+            autoRetaliateLabel.setForeground(Color.RED);
+        }
+
+        // Player Attack: 1 = Right-Click (Required)
+        if (playerAttackState == 1) {
+            playerAttackLabel.setText("- Player Attack: Right-Click");
+            playerAttackLabel.setForeground(Color.GREEN);
+        } else if (playerAttackState == 3) {
+            playerAttackLabel.setText("- Player Attack: Hidden");
+            playerAttackLabel.setForeground(Color.RED);
+        } else {
+            playerAttackLabel.setText("- Player Attack: Left-Click");
+            playerAttackLabel.setForeground(Color.RED);
+        }
+
+        // NPC Attack: 1 = Right-Click (Required)
+        if (npcAttackState == 1) {
+            npcAttackLabel.setText("- NPC Attack: Right-Click");
+            npcAttackLabel.setForeground(Color.GREEN);
+        } else if (npcAttackState == 3) {
+            npcAttackLabel.setText("- NPC Attack: Hidden");
+            npcAttackLabel.setForeground(Color.RED);
+        } else {
+            npcAttackLabel.setText("- NPC Attack: Left-Click");
+            npcAttackLabel.setForeground(Color.RED);
+        }
+
+        // Skull Prevention: 0 = OFF (Required), 1 = ON
+        if (skullPreventionState == 0) {
+            skullPreventionLabel.setText("- Skull Prevention: OFF");
+            skullPreventionLabel.setForeground(Color.GREEN);
+        } else {
+            skullPreventionLabel.setText("- Skull Prevention: ON");
+            skullPreventionLabel.setForeground(Color.RED);
+        }
+    }
+
     public void updateTickets(int count)
     {
         if (count > 0)
@@ -262,7 +338,6 @@ public class AfcPluginPanel extends PluginPanel
             int bankedXp = calculateTicketXp(count);
             ticketsLabel.setText("Dispenser Tickets: " + count + " (" + String.format("%,d XP", bankedXp) + ")");
 
-            // Turn the text green when they hit the max XP multiplier bracket
             if (count >= 101)
             {
                 ticketsLabel.setForeground(Color.GREEN);
@@ -285,7 +360,7 @@ public class AfcPluginPanel extends PluginPanel
         if (tickets <= 10) return tickets * 200;
         if (tickets <= 50) return tickets * 210;
         if (tickets <= 100) return tickets * 220;
-        return tickets * 230; // 15% Max Boost for 101+ tickets
+        return tickets * 230;
     }
 
     public void updateFallCount(int count)
@@ -295,19 +370,35 @@ public class AfcPluginPanel extends PluginPanel
 
     public void updateLootValue(long value)
     {
-        lootLabel.setText("Looting Bag: " + String.format("%,d gp", value));
-
-        if (value < 150000)
+        if (config.streamerModeLoot())
         {
-            lootLabel.setForeground(Color.RED);
+            lootLabel.setText("Looting Bag: Hidden");
+            lootLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+            return;
         }
-        else if (value >= 1500000)
+
+        // 5m+ override for GO BANK
+        if (value >= 5000000)
         {
-            lootLabel.setForeground(Color.ORANGE);
+            lootLabel.setText("Looting Bag: GO BANK");
+            lootLabel.setForeground(Color.RED);
         }
         else
         {
-            lootLabel.setForeground(Color.WHITE);
+            lootLabel.setText("Looting Bag: " + String.format("%,d gp", value));
+
+            if (value < 150000)
+            {
+                lootLabel.setForeground(Color.RED);
+            }
+            else if (value >= 1500000)
+            {
+                lootLabel.setForeground(Color.ORANGE);
+            }
+            else
+            {
+                lootLabel.setForeground(Color.WHITE);
+            }
         }
     }
 

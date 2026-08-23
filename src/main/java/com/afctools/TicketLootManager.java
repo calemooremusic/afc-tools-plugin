@@ -39,17 +39,14 @@ public class TicketLootManager
 
         String rawMsg = Text.removeTags(event.getMessage());
 
-        // 1. DISPENSER LOOT PARSER (Reads the exact chat message from the image)
         if (rawMsg.startsWith("You have been awarded ") && rawMsg.contains("from the Agility dispenser"))
         {
             long addedValue = 0;
 
-            // Strip away the extra fluff so we are left with just "4 x Blighted manta ray and 1 x Adamant platebody"
             String itemsStr = rawMsg.replace("You have been awarded ", "")
                     .replace(" from the Agility dispenser.", "")
                     .replace(" from the Agility dispenser", "");
 
-            // Split by " and " or ", " so we can process each item individually
             String[] parts = itemsStr.split(", | and ");
 
             for (String part : parts)
@@ -62,7 +59,6 @@ public class TicketLootManager
                         int qty = Integer.parseInt(qtyAndItem[0].replace(",", "").trim());
                         String itemName = qtyAndItem[1].trim();
 
-                        // Search RuneLite's cache for the live GE price
                         java.util.List<net.runelite.http.api.item.ItemPrice> results = itemManager.search(itemName);
                         if (results != null && !results.isEmpty())
                         {
@@ -75,7 +71,6 @@ public class TicketLootManager
                 }
             }
 
-            // Push the newly calculated math to the sidebar
             if (addedValue > 0)
             {
                 currentLootValue += addedValue;
@@ -90,26 +85,41 @@ public class TicketLootManager
     {
         if (pluginPanel == null) return;
 
-        // 2. TICKET TRACKER (Scans physical inventory for tickets)
-        if (event.getContainerId() == 93) // Inventory ID
+        if (event.getContainerId() == 93)
         {
             int ticketCount = 0;
+            boolean hasLootingBag = false;
+
             for (Item item : event.getItemContainer().getItems())
             {
                 if (item.getId() > 0)
                 {
                     ItemComposition comp = itemManager.getItemComposition(item.getId());
-                    if (comp != null && comp.getName() != null && comp.getName().toLowerCase().contains("ticket"))
+                    if (comp != null && comp.getName() != null)
                     {
-                        ticketCount += item.getQuantity();
+                        String name = comp.getName().toLowerCase();
+                        if (name.contains("ticket"))
+                        {
+                            ticketCount += item.getQuantity();
+                        }
+                        if (name.contains("looting bag"))
+                        {
+                            hasLootingBag = true;
+                        }
                     }
                 }
             }
             final int finalCount = ticketCount;
             SwingUtilities.invokeLater(() -> pluginPanel.updateTickets(finalCount));
+
+            // Failsafe: Zero out the loot tracker if the bag vanishes from inventory
+            if (!hasLootingBag && currentLootValue > 0)
+            {
+                currentLootValue = 0;
+                SwingUtilities.invokeLater(() -> pluginPanel.updateLootValue(0));
+            }
         }
 
-        // 3. LOOT BAG HARD-SYNC (Resets math when you manually 'Check' the bag)
         if (event.getContainerId() == LOOTING_BAG_CONTAINER_ID)
         {
             long totalValue = 0;
@@ -124,5 +134,10 @@ public class TicketLootManager
             final long finalVal = currentLootValue;
             SwingUtilities.invokeLater(() -> pluginPanel.updateLootValue(finalVal));
         }
+    }
+
+    public long getCurrentLootValue()
+    {
+        return currentLootValue;
     }
 }

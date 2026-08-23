@@ -13,6 +13,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
@@ -100,6 +101,11 @@ public class AfcToolsPlugin extends Plugin
 		eventBus.register(ticketLootManager);
 		eventBus.register(pkLogManager);
 		overlayManager.add(tileMarkerOverlay);
+
+		if (client.getGameState() == GameState.LOGGED_IN)
+		{
+			updateSafetySettings();
+		}
 	}
 
 	@Override
@@ -114,6 +120,25 @@ public class AfcToolsPlugin extends Plugin
 		overlayManager.remove(tileMarkerOverlay);
 	}
 
+	private void updateSafetySettings()
+	{
+		if (client.getGameState() != GameState.LOGGED_IN || panel == null) return;
+
+		// Corrected VarPlayer IDs for Attack Options
+		int autoRetal = client.getVarpValue(172);
+		int pAttack = client.getVarpValue(1107); // Player Attack Option
+		int nAttack = client.getVarpValue(1306); // NPC Attack Option
+		int skullPrevention = client.getVarbitValue(13131); // PK Skull Prevention
+
+		panel.updateLiveSettings(autoRetal, pAttack, nAttack, skullPrevention);
+	}
+
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		updateSafetySettings();
+	}
+
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
@@ -126,6 +151,13 @@ public class AfcToolsPlugin extends Plugin
 			else if (event.getKey().equals("customSettingsList"))
 			{
 				panel.rebuildSettingsList();
+			}
+			else if (event.getKey().equals("streamerModeLoot"))
+			{
+				if (client.getGameState() == GameState.LOGGED_IN)
+				{
+					panel.updateLootValue(ticketLootManager.getCurrentLootValue());
+				}
 			}
 		}
 	}
@@ -148,6 +180,8 @@ public class AfcToolsPlugin extends Plugin
 				sessionFalls++;
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Ouch! Session Falls: " + sessionFalls, null);
 
+				pkLogManager.triggerFallImmunity();
+
 				if (panel != null)
 				{
 					panel.updateFallCount(sessionFalls);
@@ -168,6 +202,10 @@ public class AfcToolsPlugin extends Plugin
 			{
 				panel.updateFallCount(sessionFalls);
 			}
+		}
+		else if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
+		{
+			updateSafetySettings();
 		}
 	}
 }

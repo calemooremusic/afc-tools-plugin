@@ -27,9 +27,6 @@ public class TileMarkerOverlay extends Overlay
 
     static
     {
-        // --- TEST TILE ---
-        COURSE_TILES.put(new WorldPoint(3096, 3494, 0), "Test");
-
         // --- WILDERNESS AGILITY COURSE TILES WITH LABELS ---
         COURSE_TILES.put(WorldPoint.fromRegion(11837, 54, 27, 0), "DD");
         COURSE_TILES.put(WorldPoint.fromRegion(11837, 61, 32, 0), "Disp");
@@ -78,14 +75,12 @@ public class TileMarkerOverlay extends Overlay
 
         if (lp != null)
         {
-            // Draw the magenta tile
             Polygon poly = Perspective.getCanvasTilePoly(client, lp);
             if (poly != null)
             {
                 OverlayUtil.renderPolygon(graphics, poly, MARKER_COLOR);
             }
 
-            // Draw the text label above the tile
             Point textLocation = Perspective.getCanvasTextLocation(client, graphics, lp, label, 0);
             if (textLocation != null)
             {
