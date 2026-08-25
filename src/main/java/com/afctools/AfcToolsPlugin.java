@@ -88,7 +88,6 @@ public class AfcToolsPlugin extends Plugin
 			panel = new AfcPluginPanel(config);
 			final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
 
-			// Wire up the new Reset button from the panel to the manager
 			panel.setResetPvPCallback(() -> pkLogManager.reset());
 
 			ticketLootManager.setPluginPanel(panel);

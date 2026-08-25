@@ -23,11 +23,12 @@ public class TileMarkerOverlay extends Overlay
     private final AfcToolsConfig config;
 
     private static final Color MARKER_COLOR = new Color(255, 0, 250, 255);
-    private static final Map<WorldPoint, String> COURSE_TILES = new HashMap<>();
+
+    // CHANGED TO PUBLIC SO PK LOG MANAGER CAN READ IT
+    public static final Map<WorldPoint, String> COURSE_TILES = new HashMap<>();
 
     static
     {
-        // --- WILDERNESS AGILITY COURSE TILES WITH LABELS ---
         COURSE_TILES.put(WorldPoint.fromRegion(11837, 54, 27, 0), "DD");
         COURSE_TILES.put(WorldPoint.fromRegion(11837, 61, 32, 0), "Disp");
         COURSE_TILES.put(WorldPoint.fromRegion(11837, 54, 20, 0), "Plank");

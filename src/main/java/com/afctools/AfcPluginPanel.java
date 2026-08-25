@@ -49,7 +49,7 @@ public class AfcPluginPanel extends PluginPanel
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // --- DISCORD INFO BANNER ---
+        // --- DISCORD INFO BANNER (TOP) ---
         JPanel discordBox = new JPanel(new BorderLayout());
         discordBox.setBackground(new Color(88, 101, 242));
         discordBox.setBorder(BorderFactory.createCompoundBorder(
@@ -215,6 +215,32 @@ public class AfcPluginPanel extends PluginPanel
         pvpBox.add(pvpContainer, BorderLayout.CENTER);
         pvpBox.add(resetBtn, BorderLayout.SOUTH);
         add(pvpBox);
+        add(createSpacer());
+
+        // --- BUGS & FEEDBACK FOOTER ---
+        JPanel feedbackBox = new JPanel(new BorderLayout());
+        feedbackBox.setBackground(new Color(88, 101, 242));
+        feedbackBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
+                new EmptyBorder(8, 8, 8, 8)
+        ));
+
+        JLabel feedbackText = new JLabel("<html><div style='text-align: center;'>For bugs, feedback or suggestions, please visit:<br><br><font color='#FFFF00'><b><u>AFC Tools - Runelite Plugin Discord</u></b></font></div></html>");
+        feedbackText.setForeground(Color.WHITE);
+        feedbackText.setFont(FontManager.getRunescapeSmallFont());
+        feedbackText.setHorizontalAlignment(JLabel.CENTER);
+        feedbackText.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        feedbackText.addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                LinkBrowser.browse("https://discord.com/channels/1263291279886913545/1540529675560816740");
+            }
+        });
+
+        feedbackBox.add(feedbackText, BorderLayout.CENTER);
+        add(feedbackBox);
 
         // --- CREATOR FOOTER ---
         add(createSpacer());
@@ -318,7 +344,6 @@ public class AfcPluginPanel extends PluginPanel
     {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Auto-Retaliate: 0 = ON, 1 = OFF
                 if (autoRetalState == 1) {
                     autoRetaliateLabel.setText("- Auto-Retaliate: OFF");
                     autoRetaliateLabel.setForeground(Color.GREEN);
@@ -327,7 +352,6 @@ public class AfcPluginPanel extends PluginPanel
                     autoRetaliateLabel.setForeground(Color.RED);
                 }
 
-                // Player Attack: 1 = Right-Click (Required)
                 if (playerAttackState == 1) {
                     playerAttackLabel.setText("- Player Attack: Right-Click");
                     playerAttackLabel.setForeground(Color.GREEN);
@@ -339,7 +363,6 @@ public class AfcPluginPanel extends PluginPanel
                     playerAttackLabel.setForeground(Color.RED);
                 }
 
-                // NPC Attack: 1 = Right-Click (Required)
                 if (npcAttackState == 1) {
                     npcAttackLabel.setText("- NPC Attack: Right-Click");
                     npcAttackLabel.setForeground(Color.GREEN);
@@ -351,7 +374,6 @@ public class AfcPluginPanel extends PluginPanel
                     npcAttackLabel.setForeground(Color.RED);
                 }
 
-                // Skull Prevention: 0 = OFF (Required), 1 = ON
                 if (skullPreventionState == 0) {
                     skullPreventionLabel.setText("- Skull Prevention: OFF");
                     skullPreventionLabel.setForeground(Color.GREEN);
@@ -409,7 +431,6 @@ public class AfcPluginPanel extends PluginPanel
             return;
         }
 
-        // 5m+ override for GO BANK
         if (value >= 5000000)
         {
             lootLabel.setText("Looting Bag: GO BANK");

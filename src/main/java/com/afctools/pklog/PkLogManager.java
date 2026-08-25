@@ -66,8 +66,6 @@ public class PkLogManager
 
 		if (hitsplat.getAmount() <= 0) return;
 
-		// BORROWED LOGIC: Strictly whitelist standard combat hitsplats.
-		// This ignores minigame damage (Barbarian Assault), environmental damage, disease, etc.
 		int hitType = hitsplat.getHitsplatType();
 		if (!(hitType == HitsplatID.DAMAGE_ME
 				|| hitType == HitsplatID.DAMAGE_ME_ORANGE
@@ -79,7 +77,6 @@ public class PkLogManager
 			return;
 		}
 
-		// 1. We TOOK damage
 		if (actor == client.getLocalPlayer())
 		{
 			if (System.currentTimeMillis() - fallImmunityTime < 3000)
@@ -89,21 +86,21 @@ public class PkLogManager
 
 			if (lastAttacker != null)
 			{
-				addDamage(lastAttacker.getName(), 0, hitsplat.getAmount());
+				addDamage(lastAttacker, 0, hitsplat.getAmount());
 			}
 		}
-		// 2. We DEALT damage TO another player
 		else if (actor instanceof Player && actor != client.getLocalPlayer())
 		{
 			if (hitsplat.isMine())
 			{
-				addDamage(((Player) actor).getName(), hitsplat.getAmount(), 0);
+				addDamage((Player) actor, hitsplat.getAmount(), 0);
 			}
 		}
 	}
 
-	private void addDamage(String opponentName, int dealt, int taken)
+	private void addDamage(Player opponent, int dealt, int taken)
 	{
+		String opponentName = opponent.getName();
 		int[] stats = fightStats.computeIfAbsent(opponentName, k -> new int[]{0, 0});
 		stats[0] += dealt;
 		stats[1] += taken;
