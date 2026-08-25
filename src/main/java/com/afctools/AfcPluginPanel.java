@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -36,6 +37,8 @@ public class AfcPluginPanel extends PluginPanel
     private JLabel playerAttackLabel;
     private JLabel npcAttackLabel;
     private JLabel skullPreventionLabel;
+
+    private Runnable resetPvPCallback;
 
     public AfcPluginPanel(AfcToolsConfig config)
     {
@@ -199,7 +202,18 @@ public class AfcPluginPanel extends PluginPanel
         pvpContainer = new JPanel();
         pvpContainer.setLayout(new BoxLayout(pvpContainer, BoxLayout.Y_AXIS));
         pvpContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
+        JButton resetBtn = new JButton("Reset PvP Log");
+        resetBtn.setFont(FontManager.getRunescapeSmallFont());
+        resetBtn.setFocusable(false);
+        resetBtn.addActionListener(e -> {
+            if (resetPvPCallback != null) {
+                resetPvPCallback.run();
+            }
+        });
+
         pvpBox.add(pvpContainer, BorderLayout.CENTER);
+        pvpBox.add(resetBtn, BorderLayout.SOUTH);
         add(pvpBox);
 
         // --- CREATOR FOOTER ---
@@ -211,6 +225,11 @@ public class AfcPluginPanel extends PluginPanel
         creditLabel.setFont(FontManager.getRunescapeSmallFont());
         footerPanel.add(creditLabel);
         add(footerPanel);
+    }
+
+    public void setResetPvPCallback(Runnable callback)
+    {
+        this.resetPvPCallback = callback;
     }
 
     public void rebuildGearList()

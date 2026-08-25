@@ -10,6 +10,7 @@ import javax.swing.SwingUtilities;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.Hitsplat;
+import net.runelite.api.HitsplatID;
 import net.runelite.api.Player;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
@@ -36,7 +37,6 @@ public class PkLogManager
 
 	public void triggerFallImmunity()
 	{
-		// Give the player 3 seconds of immunity from PvP damage logging when they fall
 		fallImmunityTime = System.currentTimeMillis();
 	}
 
@@ -66,10 +66,22 @@ public class PkLogManager
 
 		if (hitsplat.getAmount() <= 0) return;
 
+		// BORROWED LOGIC: Strictly whitelist standard combat hitsplats.
+		// This ignores minigame damage (Barbarian Assault), environmental damage, disease, etc.
+		int hitType = hitsplat.getHitsplatType();
+		if (!(hitType == HitsplatID.DAMAGE_ME
+				|| hitType == HitsplatID.DAMAGE_ME_ORANGE
+				|| hitType == HitsplatID.DAMAGE_OTHER_ORANGE
+				|| hitType == HitsplatID.DAMAGE_OTHER
+				|| hitType == HitsplatID.DAMAGE_MAX_ME
+				|| hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE))
+		{
+			return;
+		}
+
 		// 1. We TOOK damage
 		if (actor == client.getLocalPlayer())
 		{
-			// Ignore damage if we recently fell into a pit
 			if (System.currentTimeMillis() - fallImmunityTime < 3000)
 			{
 				return;

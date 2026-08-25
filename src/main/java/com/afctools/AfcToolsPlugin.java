@@ -88,6 +88,9 @@ public class AfcToolsPlugin extends Plugin
 			panel = new AfcPluginPanel(config);
 			final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
 
+			// Wire up the new Reset button from the panel to the manager
+			panel.setResetPvPCallback(() -> pkLogManager.reset());
+
 			ticketLootManager.setPluginPanel(panel);
 			pkLogManager.setPluginPanel(panel);
 
@@ -110,7 +113,6 @@ public class AfcToolsPlugin extends Plugin
 		}
 		catch (Exception e)
 		{
-			// If a user's local config is corrupted, this catches the crash and keeps the plugin alive
 			log.error("Failed to cleanly start AFC Tools panel, bypassing error.", e);
 		}
 	}
