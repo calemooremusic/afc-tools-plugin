@@ -83,28 +83,35 @@ public class AfcToolsPlugin extends Plugin
 		log.info("AFC Tools started!");
 		sessionFalls = 0;
 
-		panel = new AfcPluginPanel(config);
-
-		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
-
-		ticketLootManager.setPluginPanel(panel);
-		pkLogManager.setPluginPanel(panel);
-
-		navButton = NavigationButton.builder()
-				.tooltip("AFC Tools")
-				.icon(icon)
-				.priority(5)
-				.panel(panel)
-				.build();
-
-		clientToolbar.addNavigation(navButton);
-		eventBus.register(ticketLootManager);
-		eventBus.register(pkLogManager);
-		overlayManager.add(tileMarkerOverlay);
-
-		if (client.getGameState() == GameState.LOGGED_IN)
+		try
 		{
-			updateSafetySettings();
+			panel = new AfcPluginPanel(config);
+			final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
+
+			ticketLootManager.setPluginPanel(panel);
+			pkLogManager.setPluginPanel(panel);
+
+			navButton = NavigationButton.builder()
+					.tooltip("AFC Tools")
+					.icon(icon)
+					.priority(5)
+					.panel(panel)
+					.build();
+
+			clientToolbar.addNavigation(navButton);
+			eventBus.register(ticketLootManager);
+			eventBus.register(pkLogManager);
+			overlayManager.add(tileMarkerOverlay);
+
+			if (client.getGameState() == GameState.LOGGED_IN)
+			{
+				updateSafetySettings();
+			}
+		}
+		catch (Exception e)
+		{
+			// If a user's local config is corrupted, this catches the crash and keeps the plugin alive
+			log.error("Failed to cleanly start AFC Tools panel, bypassing error.", e);
 		}
 	}
 
@@ -124,13 +131,16 @@ public class AfcToolsPlugin extends Plugin
 	{
 		if (client.getGameState() != GameState.LOGGED_IN || panel == null) return;
 
-		// Corrected VarPlayer IDs for Attack Options
-		int autoRetal = client.getVarpValue(172);
-		int pAttack = client.getVarpValue(1107); // Player Attack Option
-		int nAttack = client.getVarpValue(1306); // NPC Attack Option
-		int skullPrevention = client.getVarbitValue(13131); // PK Skull Prevention
+		try
+		{
+			int autoRetal = client.getVarpValue(172);
+			int pAttack = client.getVarpValue(1107);
+			int nAttack = client.getVarpValue(1306);
+			int skullPrevention = client.getVarbitValue(13131);
 
-		panel.updateLiveSettings(autoRetal, pAttack, nAttack, skullPrevention);
+			panel.updateLiveSettings(autoRetal, pAttack, nAttack, skullPrevention);
+		}
+		catch (Exception ignored) {}
 	}
 
 	@Subscribe
