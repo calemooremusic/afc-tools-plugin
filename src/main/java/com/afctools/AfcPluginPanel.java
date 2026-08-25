@@ -13,6 +13,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -214,42 +215,50 @@ public class AfcPluginPanel extends PluginPanel
 
     public void rebuildGearList()
     {
-        gearContainer.removeAll();
-        String rawList = config.customGearList();
-        if (rawList != null && !rawList.trim().isEmpty())
-        {
-            String[] items = rawList.split("[\n,]");
-            for (String item : items)
-            {
-                String trimmed = item.trim();
-                if (!trimmed.isEmpty())
+        SwingUtilities.invokeLater(() -> {
+            try {
+                gearContainer.removeAll();
+                String rawList = config.customGearList();
+                if (rawList != null && !rawList.trim().isEmpty())
                 {
-                    addItem(gearContainer, trimmed);
+                    String[] items = rawList.split("[\n,]");
+                    for (String item : items)
+                    {
+                        String trimmed = item.trim();
+                        if (!trimmed.isEmpty())
+                        {
+                            addItem(gearContainer, trimmed);
+                        }
+                    }
                 }
-            }
-        }
-        gearContainer.revalidate();
-        gearContainer.repaint();
+                gearContainer.revalidate();
+                gearContainer.repaint();
+            } catch (Exception ignored) {}
+        });
     }
 
     public void rebuildSettingsList()
     {
-        settingsContainer.removeAll();
-        String rawList = config.customSettingsList();
-        if (rawList != null && !rawList.trim().isEmpty())
-        {
-            String[] items = rawList.split("[\n,]");
-            for (String item : items)
-            {
-                String trimmed = item.trim();
-                if (!trimmed.isEmpty())
+        SwingUtilities.invokeLater(() -> {
+            try {
+                settingsContainer.removeAll();
+                String rawList = config.customSettingsList();
+                if (rawList != null && !rawList.trim().isEmpty())
                 {
-                    addItem(settingsContainer, trimmed);
+                    String[] items = rawList.split("[\n,]");
+                    for (String item : items)
+                    {
+                        String trimmed = item.trim();
+                        if (!trimmed.isEmpty())
+                        {
+                            addItem(settingsContainer, trimmed);
+                        }
+                    }
                 }
-            }
-        }
-        settingsContainer.revalidate();
-        settingsContainer.repaint();
+                settingsContainer.revalidate();
+                settingsContainer.repaint();
+            } catch (Exception ignored) {}
+        });
     }
 
     private JPanel createBaseBox(String titleText)
@@ -288,47 +297,51 @@ public class AfcPluginPanel extends PluginPanel
 
     public void updateLiveSettings(int autoRetalState, int playerAttackState, int npcAttackState, int skullPreventionState)
     {
-        // Auto-Retaliate: 0 = ON, 1 = OFF
-        if (autoRetalState == 1) {
-            autoRetaliateLabel.setText("- Auto-Retaliate: OFF");
-            autoRetaliateLabel.setForeground(Color.GREEN);
-        } else {
-            autoRetaliateLabel.setText("- Auto-Retaliate: ON");
-            autoRetaliateLabel.setForeground(Color.RED);
-        }
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Auto-Retaliate: 0 = ON, 1 = OFF
+                if (autoRetalState == 1) {
+                    autoRetaliateLabel.setText("- Auto-Retaliate: OFF");
+                    autoRetaliateLabel.setForeground(Color.GREEN);
+                } else {
+                    autoRetaliateLabel.setText("- Auto-Retaliate: ON");
+                    autoRetaliateLabel.setForeground(Color.RED);
+                }
 
-        // Player Attack: 1 = Right-Click (Required)
-        if (playerAttackState == 1) {
-            playerAttackLabel.setText("- Player Attack: Right-Click");
-            playerAttackLabel.setForeground(Color.GREEN);
-        } else if (playerAttackState == 3) {
-            playerAttackLabel.setText("- Player Attack: Hidden");
-            playerAttackLabel.setForeground(Color.RED);
-        } else {
-            playerAttackLabel.setText("- Player Attack: Left-Click");
-            playerAttackLabel.setForeground(Color.RED);
-        }
+                // Player Attack: 1 = Right-Click (Required)
+                if (playerAttackState == 1) {
+                    playerAttackLabel.setText("- Player Attack: Right-Click");
+                    playerAttackLabel.setForeground(Color.GREEN);
+                } else if (playerAttackState == 3) {
+                    playerAttackLabel.setText("- Player Attack: Hidden");
+                    playerAttackLabel.setForeground(Color.RED);
+                } else {
+                    playerAttackLabel.setText("- Player Attack: Left-Click");
+                    playerAttackLabel.setForeground(Color.RED);
+                }
 
-        // NPC Attack: 1 = Right-Click (Required)
-        if (npcAttackState == 1) {
-            npcAttackLabel.setText("- NPC Attack: Right-Click");
-            npcAttackLabel.setForeground(Color.GREEN);
-        } else if (npcAttackState == 3) {
-            npcAttackLabel.setText("- NPC Attack: Hidden");
-            npcAttackLabel.setForeground(Color.RED);
-        } else {
-            npcAttackLabel.setText("- NPC Attack: Left-Click");
-            npcAttackLabel.setForeground(Color.RED);
-        }
+                // NPC Attack: 1 = Right-Click (Required)
+                if (npcAttackState == 1) {
+                    npcAttackLabel.setText("- NPC Attack: Right-Click");
+                    npcAttackLabel.setForeground(Color.GREEN);
+                } else if (npcAttackState == 3) {
+                    npcAttackLabel.setText("- NPC Attack: Hidden");
+                    npcAttackLabel.setForeground(Color.RED);
+                } else {
+                    npcAttackLabel.setText("- NPC Attack: Left-Click");
+                    npcAttackLabel.setForeground(Color.RED);
+                }
 
-        // Skull Prevention: 0 = OFF (Required), 1 = ON
-        if (skullPreventionState == 0) {
-            skullPreventionLabel.setText("- Skull Prevention: OFF");
-            skullPreventionLabel.setForeground(Color.GREEN);
-        } else {
-            skullPreventionLabel.setText("- Skull Prevention: ON");
-            skullPreventionLabel.setForeground(Color.RED);
-        }
+                // Skull Prevention: 0 = OFF (Required), 1 = ON
+                if (skullPreventionState == 0) {
+                    skullPreventionLabel.setText("- Skull Prevention: OFF");
+                    skullPreventionLabel.setForeground(Color.GREEN);
+                } else {
+                    skullPreventionLabel.setText("- Skull Prevention: ON");
+                    skullPreventionLabel.setForeground(Color.RED);
+                }
+            } catch (Exception ignored) {}
+        });
     }
 
     public void updateTickets(int count)
