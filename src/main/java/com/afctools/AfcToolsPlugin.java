@@ -28,9 +28,9 @@ import net.runelite.client.util.Text;
 
 @Slf4j
 @PluginDescriptor(
-		name = "AFC Tools",
-		description = "Wilderness Agility tools and trackers",
-		tags = {"agility", "wilderness", "tracker"}
+		name = "Wilderness Agility Tool",
+		description = "A customizable toolkit for Wilderness Agility survival and tracking.",
+		tags = {"wilderness", "agility", "pvp", "tracker", "overlay"}
 )
 public class AfcToolsPlugin extends Plugin
 {
@@ -58,10 +58,15 @@ public class AfcToolsPlugin extends Plugin
 	@Inject
 	private TileMarkerOverlay tileMarkerOverlay;
 
+	@Inject
+	private AfcTrackerOverlay trackerOverlay;
+
 	private NavigationButton navButton;
 	private AfcPluginPanel panel;
 
-	private int sessionFalls;
+	private int sessionFalls = 0;
+	private int sessionTickets = 0;
+	private long lootingBagValue = 0;
 
 	private static final List<String> FALL_MESSAGES = Arrays.asList(
 			"you lose your footing and fall into the wolf pit",
@@ -80,8 +85,9 @@ public class AfcToolsPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("AFC Tools started!");
 		sessionFalls = 0;
+		sessionTickets = 0;
+		lootingBagValue = 0;
 
 		try
 		{
@@ -90,11 +96,11 @@ public class AfcToolsPlugin extends Plugin
 
 			panel.setResetPvPCallback(() -> pkLogManager.reset());
 
-			ticketLootManager.setPluginPanel(panel);
+			ticketLootManager.setPlugin(this);
 			pkLogManager.setPluginPanel(panel);
 
 			navButton = NavigationButton.builder()
-					.tooltip("AFC Tools")
+					.tooltip("Wilderness Agility Tool")
 					.icon(icon)
 					.priority(5)
 					.panel(panel)
@@ -104,99 +110,63 @@ public class AfcToolsPlugin extends Plugin
 			eventBus.register(ticketLootManager);
 			eventBus.register(pkLogManager);
 			overlayManager.add(tileMarkerOverlay);
+			if (trackerOverlay != null) overlayManager.add(trackerOverlay);
 
-			if (client.getGameState() == GameState.LOGGED_IN)
-			{
-				updateSafetySettings();
-			}
+			if (client.getGameState() == GameState.LOGGED_IN) updateSafetySettings();
 		}
 		catch (Exception e)
 		{
-			log.error("Failed to cleanly start AFC Tools panel, bypassing error.", e);
+			log.error("Failed to cleanly start plugin panel.", e);
 		}
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		log.info("AFC Tools stopped!");
-		sessionFalls = 0;
-
 		clientToolbar.removeNavigation(navButton);
 		eventBus.unregister(ticketLootManager);
 		eventBus.unregister(pkLogManager);
 		overlayManager.remove(tileMarkerOverlay);
+		if (trackerOverlay != null) overlayManager.remove(trackerOverlay);
 	}
 
 	private void updateSafetySettings()
 	{
 		if (client.getGameState() != GameState.LOGGED_IN || panel == null) return;
-
-		try
-		{
-			int autoRetal = client.getVarpValue(172);
-			int pAttack = client.getVarpValue(1107);
-			int nAttack = client.getVarpValue(1306);
-			int skullPrevention = client.getVarbitValue(13131);
-
-			panel.updateLiveSettings(autoRetal, pAttack, nAttack, skullPrevention);
-		}
-		catch (Exception ignored) {}
+		try {
+			panel.updateLiveSettings(client.getVarpValue(172), client.getVarpValue(1107), client.getVarpValue(1306), client.getVarbitValue(13131));
+		} catch (Exception ignored) {}
 	}
 
 	@Subscribe
-	public void onVarbitChanged(VarbitChanged event)
-	{
-		updateSafetySettings();
-	}
+	public void onVarbitChanged(VarbitChanged event) { updateSafetySettings(); }
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
 		if (event.getGroup().equals("afctools") && panel != null)
 		{
-			if (event.getKey().equals("customGearList"))
-			{
-				panel.rebuildGearList();
-			}
-			else if (event.getKey().equals("customSettingsList"))
-			{
-				panel.rebuildSettingsList();
-			}
-			else if (event.getKey().equals("streamerModeLoot"))
-			{
-				if (client.getGameState() == GameState.LOGGED_IN)
-				{
-					panel.updateLootValue(ticketLootManager.getCurrentLootValue());
-				}
-			}
+			if (event.getKey().equals("customGearList")) panel.rebuildGearList();
+			else if (event.getKey().equals("customSettingsList")) panel.rebuildSettingsList();
+			else if (event.getKey().equals("streamerModeLoot") && client.getGameState() == GameState.LOGGED_IN) panel.updateLootValue(lootingBagValue);
+			else if (event.getKey().equals("showPanelStats")) panel.togglePanelStats(config.showPanelStats());
 		}
 	}
 
 	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
-		if (!config.fallTrackerEnabled())
-		{
-			return;
-		}
+		if (!config.fallTrackerEnabled()) return;
 
 		if (event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM)
 		{
 			String message = Text.removeTags(event.getMessage()).toLowerCase();
-			boolean isFall = FALL_MESSAGES.stream().anyMatch(message::contains);
-
-			if (isFall)
+			if (FALL_MESSAGES.stream().anyMatch(message::contains))
 			{
 				sessionFalls++;
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Ouch! Session Falls: " + sessionFalls, null);
-
 				pkLogManager.triggerFallImmunity();
-
-				if (panel != null)
-				{
-					panel.updateFallCount(sessionFalls);
-				}
+				if (panel != null) panel.updateFallCount(sessionFalls);
 			}
 		}
 	}
@@ -204,19 +174,27 @@ public class AfcToolsPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGIN_SCREEN ||
-				gameStateChanged.getGameState() == GameState.HOPPING)
+		if (gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.HOPPING)
 		{
 			sessionFalls = 0;
-
-			if (panel != null)
-			{
-				panel.updateFallCount(sessionFalls);
-			}
+			if (panel != null) panel.updateFallCount(sessionFalls);
 		}
-		else if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-		{
-			updateSafetySettings();
-		}
+		else if (gameStateChanged.getGameState() == GameState.LOGGED_IN) updateSafetySettings();
 	}
+
+	public void setSessionTickets(int tickets)
+	{
+		this.sessionTickets = tickets;
+		if (panel != null) panel.updateTickets(tickets);
+	}
+
+	public void setLootingBagValue(long value)
+	{
+		this.lootingBagValue = value;
+		if (panel != null) panel.updateLootValue(value);
+	}
+
+	public int getSessionTickets() { return sessionTickets; }
+	public int getLootingBagValue() { return (int) lootingBagValue; }
+	public int getSessionFalls() { return sessionFalls; }
 }

@@ -19,7 +19,6 @@ import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.util.LinkBrowser;
 
 public class AfcPluginPanel extends PluginPanel
 {
@@ -27,6 +26,7 @@ public class AfcPluginPanel extends PluginPanel
     private final JPanel pvpContainer;
     private final JPanel gearContainer;
     private final JPanel settingsContainer;
+    private final JPanel statusBox;
     private final Map<String, JPanel> fightBoxes = new HashMap<>();
 
     private JLabel ticketsLabel;
@@ -49,30 +49,18 @@ public class AfcPluginPanel extends PluginPanel
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // --- DISCORD INFO BANNER (TOP) ---
-        JPanel discordBox = new JPanel(new BorderLayout());
-        discordBox.setBackground(new Color(88, 101, 242));
-        discordBox.setBorder(BorderFactory.createCompoundBorder(
+        // --- REBRANDED HEADER ---
+        JPanel headerBox = new JPanel(new BorderLayout());
+        headerBox.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        headerBox.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
                 new EmptyBorder(8, 8, 8, 8)
         ));
-
-        JLabel infoText = new JLabel("<html><div style='text-align: center;'>For more info on gear, strategy and rules for group runs visit:<br><br><font color='#FFFF00'><b><u>discord.gg/agilityfc</u></b></font></div></html>");
-        infoText.setForeground(Color.WHITE);
-        infoText.setFont(FontManager.getRunescapeSmallFont());
-        infoText.setHorizontalAlignment(JLabel.CENTER);
-        infoText.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        infoText.addMouseListener(new MouseAdapter()
-        {
-            @Override
-            public void mouseClicked(MouseEvent e)
-            {
-                LinkBrowser.browse("https://discord.gg/agilityfc");
-            }
-        });
-
-        discordBox.add(infoText, BorderLayout.CENTER);
-        add(discordBox);
+        JLabel titleText = new JLabel("<html><div style='text-align: center;'><font color='#FFFFFF'><b>Wilderness Agility Tool</b></font><br><font color='#A0A0A0'>By: DawnKeedic</font></div></html>");
+        titleText.setFont(FontManager.getRunescapeSmallFont());
+        titleText.setHorizontalAlignment(JLabel.CENTER);
+        headerBox.add(titleText, BorderLayout.CENTER);
+        add(headerBox);
         add(createSpacer());
 
         // --- GEAR CHECKLIST SECTION ---
@@ -85,28 +73,24 @@ public class AfcPluginPanel extends PluginPanel
         add(createSpacer());
 
         // --- REQUIRED SETTINGS CHECK SECTION ---
-        JPanel liveStatusBox = createBaseBox("Required Settings Check");
+        JPanel liveStatusBox = createBaseBox("Safety Settings Check");
         JPanel liveStatusContainer = new JPanel(new GridLayout(0, 1, 0, 4));
         liveStatusContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
         autoRetaliateLabel = new JLabel("- Auto-Retaliate: Unknown");
         autoRetaliateLabel.setFont(FontManager.getRunescapeSmallFont());
-        autoRetaliateLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         liveStatusContainer.add(autoRetaliateLabel);
 
         playerAttackLabel = new JLabel("- Player Attack: Unknown");
         playerAttackLabel.setFont(FontManager.getRunescapeSmallFont());
-        playerAttackLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         liveStatusContainer.add(playerAttackLabel);
 
         npcAttackLabel = new JLabel("- NPC Attack: Unknown");
         npcAttackLabel.setFont(FontManager.getRunescapeSmallFont());
-        npcAttackLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         liveStatusContainer.add(npcAttackLabel);
 
         skullPreventionLabel = new JLabel("- Skull Prevention: Unknown");
         skullPreventionLabel.setFont(FontManager.getRunescapeSmallFont());
-        skullPreventionLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         liveStatusContainer.add(skullPreventionLabel);
 
         liveStatusBox.add(liveStatusContainer, BorderLayout.CENTER);
@@ -123,7 +107,7 @@ public class AfcPluginPanel extends PluginPanel
         add(createSpacer());
 
         // --- RUN STATUS SECTION ---
-        JPanel statusBox = createBaseBox("Run Status");
+        statusBox = createBaseBox("Run Status");
         JPanel statusItems = new JPanel(new GridLayout(0, 1, 0, 4));
         statusItems.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -145,6 +129,7 @@ public class AfcPluginPanel extends PluginPanel
         statusBox.add(statusItems, BorderLayout.CENTER);
         add(statusBox);
         add(createSpacer());
+        statusBox.setVisible(config.showPanelStats());
 
         // --- SAFE BANKING GUIDE (DROPDOWN) ---
         JPanel bankingBox = new JPanel(new BorderLayout());
@@ -168,32 +153,21 @@ public class AfcPluginPanel extends PluginPanel
         bankingContent.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         bankingContent.setBorder(new EmptyBorder(8, 0, 0, 0));
 
-        JLabel bankingText = new JLabel("<html>" +
-                "1. Hop to a random world<br>" +
-                "2. Leave the Friends Chat (FC)<br>" +
-                "3. Hop worlds again<br>" +
-                "4. Travel to the bank safely" +
-                "</html>");
+        JLabel bankingText = new JLabel("<html>1. Hop to a random world<br>2. Hover teleport options<br>3. Avoid multi-combat zones<br>4. Travel to the bank safely</html>");
         bankingText.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         bankingText.setFont(FontManager.getRunescapeSmallFont());
         bankingContent.add(bankingText, BorderLayout.CENTER);
         bankingContent.setVisible(false);
 
         bankingBox.add(bankingContent, BorderLayout.CENTER);
-
-        bankingHeader.addMouseListener(new MouseAdapter()
-        {
+        bankingHeader.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e)
-            {
+            public void mouseClicked(MouseEvent e) {
                 boolean isVisible = bankingContent.isVisible();
                 bankingContent.setVisible(!isVisible);
                 bankingTitle.setText(isVisible ? "Safe Solo Banking Guide \u25BE" : "Safe Solo Banking Guide \u25B4");
-                bankingBox.revalidate();
-                bankingBox.repaint();
             }
         });
-
         add(bankingBox);
         add(createSpacer());
 
@@ -207,56 +181,16 @@ public class AfcPluginPanel extends PluginPanel
         resetBtn.setFont(FontManager.getRunescapeSmallFont());
         resetBtn.setFocusable(false);
         resetBtn.addActionListener(e -> {
-            if (resetPvPCallback != null) {
-                resetPvPCallback.run();
-            }
+            if (resetPvPCallback != null) resetPvPCallback.run();
         });
 
         pvpBox.add(pvpContainer, BorderLayout.CENTER);
         pvpBox.add(resetBtn, BorderLayout.SOUTH);
         add(pvpBox);
-        add(createSpacer());
-
-        // --- BUGS & FEEDBACK FOOTER ---
-        JPanel feedbackBox = new JPanel(new BorderLayout());
-        feedbackBox.setBackground(new Color(88, 101, 242));
-        feedbackBox.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
-                new EmptyBorder(8, 8, 8, 8)
-        ));
-
-        JLabel feedbackText = new JLabel("<html><div style='text-align: center;'>For bugs, feedback or suggestions, please visit:<br><br><font color='#FFFF00'><b><u>AFC Tools - Runelite Plugin Discord</u></b></font></div></html>");
-        feedbackText.setForeground(Color.WHITE);
-        feedbackText.setFont(FontManager.getRunescapeSmallFont());
-        feedbackText.setHorizontalAlignment(JLabel.CENTER);
-        feedbackText.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        feedbackText.addMouseListener(new MouseAdapter()
-        {
-            @Override
-            public void mouseClicked(MouseEvent e)
-            {
-                LinkBrowser.browse("https://discord.com/channels/1263291279886913545/1540529675560816740");
-            }
-        });
-
-        feedbackBox.add(feedbackText, BorderLayout.CENTER);
-        add(feedbackBox);
-
-        // --- CREATOR FOOTER ---
-        add(createSpacer());
-        JPanel footerPanel = new JPanel();
-        footerPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        JLabel creditLabel = new JLabel("Plug-in Created by: DawnKeedic");
-        creditLabel.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
-        creditLabel.setFont(FontManager.getRunescapeSmallFont());
-        footerPanel.add(creditLabel);
-        add(footerPanel);
     }
 
-    public void setResetPvPCallback(Runnable callback)
-    {
-        this.resetPvPCallback = callback;
-    }
+    public void setResetPvPCallback(Runnable callback) { this.resetPvPCallback = callback; }
+    public void togglePanelStats(boolean visible) { statusBox.setVisible(visible); }
 
     public void rebuildGearList()
     {
@@ -264,16 +198,9 @@ public class AfcPluginPanel extends PluginPanel
             try {
                 gearContainer.removeAll();
                 String rawList = config.customGearList();
-                if (rawList != null && !rawList.trim().isEmpty())
-                {
-                    String[] items = rawList.split("[\n,]");
-                    for (String item : items)
-                    {
-                        String trimmed = item.trim();
-                        if (!trimmed.isEmpty())
-                        {
-                            addItem(gearContainer, trimmed);
-                        }
+                if (rawList != null && !rawList.trim().isEmpty()) {
+                    for (String item : rawList.split("[\n,]")) {
+                        if (!item.trim().isEmpty()) addItem(gearContainer, item.trim());
                     }
                 }
                 gearContainer.revalidate();
@@ -288,16 +215,9 @@ public class AfcPluginPanel extends PluginPanel
             try {
                 settingsContainer.removeAll();
                 String rawList = config.customSettingsList();
-                if (rawList != null && !rawList.trim().isEmpty())
-                {
-                    String[] items = rawList.split("[\n,]");
-                    for (String item : items)
-                    {
-                        String trimmed = item.trim();
-                        if (!trimmed.isEmpty())
-                        {
-                            addItem(settingsContainer, trimmed);
-                        }
+                if (rawList != null && !rawList.trim().isEmpty()) {
+                    for (String item : rawList.split("[\n,]")) {
+                        if (!item.trim().isEmpty()) addItem(settingsContainer, item.trim());
                     }
                 }
                 settingsContainer.revalidate();
@@ -314,13 +234,11 @@ public class AfcPluginPanel extends PluginPanel
                 BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
                 new EmptyBorder(8, 8, 8, 8)
         ));
-
         JLabel title = new JLabel(titleText);
         title.setForeground(Color.WHITE);
         title.setFont(FontManager.getRunescapeSmallFont());
         title.setBorder(new EmptyBorder(0, 0, 4, 0));
         box.add(title, BorderLayout.NORTH);
-
         return box;
     }
 
@@ -344,68 +262,64 @@ public class AfcPluginPanel extends PluginPanel
     {
         SwingUtilities.invokeLater(() -> {
             try {
-                if (autoRetalState == 1) {
-                    autoRetaliateLabel.setText("- Auto-Retaliate: OFF");
-                    autoRetaliateLabel.setForeground(Color.GREEN);
+                // Auto-Retaliate Check
+                if (config.prefAutoRetaliate() == AfcToolsConfig.RetaliateOption.IGNORE) {
+                    autoRetaliateLabel.setText("- Auto-Retaliate: Ignored");
+                    autoRetaliateLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
                 } else {
-                    autoRetaliateLabel.setText("- Auto-Retaliate: ON");
-                    autoRetaliateLabel.setForeground(Color.RED);
+                    boolean isOff = (autoRetalState == 1);
+                    boolean wantsOff = (config.prefAutoRetaliate() == AfcToolsConfig.RetaliateOption.OFF);
+                    autoRetaliateLabel.setText("- Auto-Retaliate: " + (isOff ? "OFF" : "ON"));
+                    autoRetaliateLabel.setForeground((isOff == wantsOff) ? Color.GREEN : Color.RED);
                 }
 
-                if (playerAttackState == 1) {
-                    playerAttackLabel.setText("- Player Attack: Right-Click");
-                    playerAttackLabel.setForeground(Color.GREEN);
-                } else if (playerAttackState == 3) {
-                    playerAttackLabel.setText("- Player Attack: Hidden");
-                    playerAttackLabel.setForeground(Color.RED);
-                } else {
-                    playerAttackLabel.setText("- Player Attack: Left-Click");
-                    playerAttackLabel.setForeground(Color.RED);
-                }
+                // Attack Options Check
+                processAttackOption(playerAttackLabel, "- Player Attack: ", playerAttackState, config.prefPlayerAttack());
+                processAttackOption(npcAttackLabel, "- NPC Attack: ", npcAttackState, config.prefNpcAttack());
 
-                if (npcAttackState == 1) {
-                    npcAttackLabel.setText("- NPC Attack: Right-Click");
-                    npcAttackLabel.setForeground(Color.GREEN);
-                } else if (npcAttackState == 3) {
-                    npcAttackLabel.setText("- NPC Attack: Hidden");
-                    npcAttackLabel.setForeground(Color.RED);
+                // Skull Prevention Check
+                if (config.prefSkullPrevention() == AfcToolsConfig.SkullPreventionOption.IGNORE) {
+                    skullPreventionLabel.setText("- Skull Prevention: Ignored");
+                    skullPreventionLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
                 } else {
-                    npcAttackLabel.setText("- NPC Attack: Left-Click");
-                    npcAttackLabel.setForeground(Color.RED);
-                }
-
-                if (skullPreventionState == 0) {
-                    skullPreventionLabel.setText("- Skull Prevention: OFF");
-                    skullPreventionLabel.setForeground(Color.GREEN);
-                } else {
-                    skullPreventionLabel.setText("- Skull Prevention: ON");
-                    skullPreventionLabel.setForeground(Color.RED);
+                    boolean isOn = (skullPreventionState == 1);
+                    boolean wantsOn = (config.prefSkullPrevention() == AfcToolsConfig.SkullPreventionOption.ON);
+                    skullPreventionLabel.setText("- Skull Prevention: " + (isOn ? "ON" : "OFF"));
+                    skullPreventionLabel.setForeground((isOn == wantsOn) ? Color.GREEN : Color.RED);
                 }
             } catch (Exception ignored) {}
         });
     }
 
+    private void processAttackOption(JLabel label, String prefix, int state, AfcToolsConfig.AttackOption pref)
+    {
+        if (pref == AfcToolsConfig.AttackOption.IGNORE) {
+            label.setText(prefix + "Ignored");
+            label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+            return;
+        }
+        String currentStr = (state == 1) ? "Right-Click" : (state == 3) ? "Hidden" : "Left-Click";
+        label.setText(prefix + currentStr);
+
+        boolean matches = false;
+        if (state == 1 && pref == AfcToolsConfig.AttackOption.RIGHT_CLICK) matches = true;
+        if (state == 3 && pref == AfcToolsConfig.AttackOption.HIDDEN) matches = true;
+        if ((state != 1 && state != 3) && pref == AfcToolsConfig.AttackOption.LEFT_CLICK) matches = true;
+
+        label.setForeground(matches ? Color.GREEN : Color.RED);
+    }
+
     public void updateTickets(int count)
     {
-        if (count > 0)
-        {
-            int bankedXp = calculateTicketXp(count);
-            ticketsLabel.setText("Dispenser Tickets: " + count + " (" + String.format("%,d XP", bankedXp) + ")");
-
-            if (count >= 101)
-            {
-                ticketsLabel.setForeground(Color.GREEN);
-            }
-            else
-            {
+        SwingUtilities.invokeLater(() -> {
+            if (count > 0) {
+                ticketsLabel.setText("Dispenser Tickets: " + count + " (" + String.format("%,d XP", calculateTicketXp(count)) + ")");
+                ticketsLabel.setForeground(count >= 101 ? Color.GREEN : Color.WHITE);
+            } else {
+                ticketsLabel.setText("Dispenser Tickets: 0");
                 ticketsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
             }
-        }
-        else
-        {
-            ticketsLabel.setText("Dispenser Tickets: 0");
-            ticketsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        }
+        });
     }
 
     private int calculateTicketXp(int tickets)
@@ -419,87 +333,69 @@ public class AfcPluginPanel extends PluginPanel
 
     public void updateFallCount(int count)
     {
-        fallsLabel.setText("Session Falls: " + count);
+        SwingUtilities.invokeLater(() -> fallsLabel.setText("Session Falls: " + count));
     }
 
     public void updateLootValue(long value)
     {
-        if (config.streamerModeLoot())
-        {
-            lootLabel.setText("Looting Bag: Hidden");
-            lootLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-            return;
-        }
-
-        if (value >= 5000000)
-        {
-            lootLabel.setText("Looting Bag: GO BANK");
-            lootLabel.setForeground(Color.RED);
-        }
-        else
-        {
-            lootLabel.setText("Looting Bag: " + String.format("%,d gp", value));
-
-            if (value < 150000)
-            {
+        SwingUtilities.invokeLater(() -> {
+            if (config.streamerModeLoot()) {
+                lootLabel.setText("Looting Bag: Hidden");
+                lootLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+                return;
+            }
+            if (value >= 5000000) {
+                lootLabel.setText("Looting Bag: GO BANK");
                 lootLabel.setForeground(Color.RED);
+            } else {
+                lootLabel.setText("Looting Bag: " + String.format("%,d gp", value));
+                if (value < 150000) lootLabel.setForeground(Color.RED);
+                else if (value >= 1500000) lootLabel.setForeground(Color.ORANGE);
+                else lootLabel.setForeground(Color.WHITE);
             }
-            else if (value >= 1500000)
-            {
-                lootLabel.setForeground(Color.ORANGE);
-            }
-            else
-            {
-                lootLabel.setForeground(Color.WHITE);
-            }
-        }
+        });
     }
 
     public void updatePvPStats(String opponentName, int damageDealt, int damageTaken, int world)
     {
-        if (fightBoxes.containsKey(opponentName))
-        {
-            pvpContainer.remove(fightBoxes.get(opponentName));
-        }
+        SwingUtilities.invokeLater(() -> {
+            if (fightBoxes.containsKey(opponentName)) pvpContainer.remove(fightBoxes.get(opponentName));
 
-        JPanel fightBox = new JPanel(new BorderLayout());
-        fightBox.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        fightBox.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
-                new EmptyBorder(5, 5, 5, 5)
-        ));
+            JPanel fightBox = new JPanel(new BorderLayout());
+            fightBox.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+            fightBox.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1), new EmptyBorder(5, 5, 5, 5)));
 
-        JLabel nameLabel = new JLabel(opponentName + " (W" + world + ")");
-        nameLabel.setForeground(Color.WHITE);
-        nameLabel.setFont(FontManager.getRunescapeBoldFont());
-        fightBox.add(nameLabel, BorderLayout.NORTH);
+            JLabel nameLabel = new JLabel(opponentName + " (W" + world + ")");
+            nameLabel.setForeground(Color.WHITE);
+            nameLabel.setFont(FontManager.getRunescapeBoldFont());
+            fightBox.add(nameLabel, BorderLayout.NORTH);
 
-        JPanel statsPanel = new JPanel(new GridLayout(1, 2));
-        statsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+            JPanel statsPanel = new JPanel(new GridLayout(1, 2));
+            statsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-        JLabel dealtLabel = new JLabel("Dealt: " + damageDealt);
-        dealtLabel.setForeground(Color.GREEN);
+            JLabel dealtLabel = new JLabel("Dealt: " + damageDealt);
+            dealtLabel.setForeground(Color.GREEN);
+            JLabel takenLabel = new JLabel("Taken: " + damageTaken);
+            takenLabel.setForeground(Color.RED);
 
-        JLabel takenLabel = new JLabel("Taken: " + damageTaken);
-        takenLabel.setForeground(Color.RED);
+            statsPanel.add(dealtLabel);
+            statsPanel.add(takenLabel);
+            fightBox.add(statsPanel, BorderLayout.SOUTH);
 
-        statsPanel.add(dealtLabel);
-        statsPanel.add(takenLabel);
-
-        fightBox.add(statsPanel, BorderLayout.SOUTH);
-
-        fightBoxes.put(opponentName, fightBox);
-        pvpContainer.add(fightBox, 0);
-
-        pvpContainer.revalidate();
-        pvpContainer.repaint();
+            fightBoxes.put(opponentName, fightBox);
+            pvpContainer.add(fightBox, 0);
+            pvpContainer.revalidate();
+            pvpContainer.repaint();
+        });
     }
 
     public void resetPvP()
     {
-        pvpContainer.removeAll();
-        fightBoxes.clear();
-        pvpContainer.revalidate();
-        pvpContainer.repaint();
+        SwingUtilities.invokeLater(() -> {
+            pvpContainer.removeAll();
+            fightBoxes.clear();
+            pvpContainer.revalidate();
+            pvpContainer.repaint();
+        });
     }
 }

@@ -2,7 +2,6 @@ package com.afctools;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
 import net.runelite.api.ItemComposition;
@@ -21,32 +20,26 @@ public class TicketLootManager
     @Inject
     private ItemManager itemManager;
 
-    private AfcPluginPanel pluginPanel;
+    private AfcToolsPlugin plugin;
 
     private static final int LOOTING_BAG_CONTAINER_ID = 516;
-
     private long currentLootValue = 0;
 
-    public void setPluginPanel(AfcPluginPanel pluginPanel)
+    public void setPlugin(AfcToolsPlugin plugin)
     {
-        this.pluginPanel = pluginPanel;
+        this.plugin = plugin;
     }
 
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
-        if (pluginPanel == null) return;
-
+        if (plugin == null) return;
         String rawMsg = Text.removeTags(event.getMessage());
 
         if (rawMsg.startsWith("You have been awarded ") && rawMsg.contains("from the Agility dispenser"))
         {
             long addedValue = 0;
-
-            String itemsStr = rawMsg.replace("You have been awarded ", "")
-                    .replace(" from the Agility dispenser.", "")
-                    .replace(" from the Agility dispenser", "");
-
+            String itemsStr = rawMsg.replace("You have been awarded ", "").replace(" from the Agility dispenser.", "").replace(" from the Agility dispenser", "");
             String[] parts = itemsStr.split(", | and ");
 
             for (String part : parts)
@@ -54,28 +47,19 @@ public class TicketLootManager
                 String[] qtyAndItem = part.split(" x ", 2);
                 if (qtyAndItem.length == 2)
                 {
-                    try
-                    {
+                    try {
                         int qty = Integer.parseInt(qtyAndItem[0].replace(",", "").trim());
                         String itemName = qtyAndItem[1].trim();
-
                         java.util.List<net.runelite.http.api.item.ItemPrice> results = itemManager.search(itemName);
-                        if (results != null && !results.isEmpty())
-                        {
-                            addedValue += (long) results.get(0).getPrice() * qty;
-                        }
-                    }
-                    catch (Exception ignored)
-                    {
-                    }
+                        if (results != null && !results.isEmpty()) addedValue += (long) results.get(0).getPrice() * qty;
+                    } catch (Exception ignored) {}
                 }
             }
 
             if (addedValue > 0)
             {
                 currentLootValue += addedValue;
-                final long finalVal = currentLootValue;
-                SwingUtilities.invokeLater(() -> pluginPanel.updateLootValue(finalVal));
+                plugin.setLootingBagValue(currentLootValue);
             }
         }
     }
@@ -83,7 +67,7 @@ public class TicketLootManager
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
-        if (pluginPanel == null) return;
+        if (plugin == null) return;
 
         if (event.getContainerId() == 93)
         {
@@ -98,25 +82,17 @@ public class TicketLootManager
                     if (comp != null && comp.getName() != null)
                     {
                         String name = comp.getName().toLowerCase();
-                        if (name.contains("ticket"))
-                        {
-                            ticketCount += item.getQuantity();
-                        }
-                        if (name.contains("looting bag"))
-                        {
-                            hasLootingBag = true;
-                        }
+                        if (name.contains("ticket")) ticketCount += item.getQuantity();
+                        if (name.contains("looting bag")) hasLootingBag = true;
                     }
                 }
             }
-            final int finalCount = ticketCount;
-            SwingUtilities.invokeLater(() -> pluginPanel.updateTickets(finalCount));
+            plugin.setSessionTickets(ticketCount);
 
-            // Failsafe: Zero out the loot tracker if the bag vanishes from inventory
             if (!hasLootingBag && currentLootValue > 0)
             {
                 currentLootValue = 0;
-                SwingUtilities.invokeLater(() -> pluginPanel.updateLootValue(0));
+                plugin.setLootingBagValue(0);
             }
         }
 
@@ -131,8 +107,7 @@ public class TicketLootManager
                 }
             }
             currentLootValue = totalValue;
-            final long finalVal = currentLootValue;
-            SwingUtilities.invokeLater(() -> pluginPanel.updateLootValue(finalVal));
+            plugin.setLootingBagValue(currentLootValue);
         }
     }
 
