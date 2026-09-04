@@ -8,6 +8,7 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -27,18 +28,21 @@ public class AfcPluginPanel extends PluginPanel
     private final JPanel gearContainer;
     private final JPanel settingsContainer;
     private final JPanel statusBox;
+    private final JPanel hiscoresBox;
+    private final JPanel hiscoresContainer;
     private final Map<String, JPanel> fightBoxes = new HashMap<>();
 
     private JLabel ticketsLabel;
     private JLabel lootLabel;
     private JLabel fallsLabel;
-
     private JLabel autoRetaliateLabel;
     private JLabel playerAttackLabel;
     private JLabel npcAttackLabel;
     private JLabel skullPreventionLabel;
 
     private Runnable resetPvPCallback;
+    private Runnable refreshHiscoresCallback;
+    private Runnable forceSyncCallback;
 
     public AfcPluginPanel(AfcToolsConfig config)
     {
@@ -49,7 +53,6 @@ public class AfcPluginPanel extends PluginPanel
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // --- REBRANDED HEADER ---
         JPanel headerBox = new JPanel(new BorderLayout());
         headerBox.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         headerBox.setBorder(BorderFactory.createCompoundBorder(
@@ -63,7 +66,6 @@ public class AfcPluginPanel extends PluginPanel
         add(headerBox);
         add(createSpacer());
 
-        // --- GEAR CHECKLIST SECTION ---
         JPanel gearBox = createBaseBox("Pre-Run Checklist");
         gearContainer = new JPanel(new GridLayout(0, 1, 0, 4));
         gearContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -72,7 +74,6 @@ public class AfcPluginPanel extends PluginPanel
         add(gearBox);
         add(createSpacer());
 
-        // --- REQUIRED SETTINGS CHECK SECTION ---
         JPanel liveStatusBox = createBaseBox("Safety Settings Check");
         JPanel liveStatusContainer = new JPanel(new GridLayout(0, 1, 0, 4));
         liveStatusContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -97,7 +98,6 @@ public class AfcPluginPanel extends PluginPanel
         add(liveStatusBox);
         add(createSpacer());
 
-        // --- CUSTOM SETTINGS SECTION ---
         JPanel settingsBox = createBaseBox("Custom Settings");
         settingsContainer = new JPanel(new GridLayout(0, 1, 0, 4));
         settingsContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -106,7 +106,6 @@ public class AfcPluginPanel extends PluginPanel
         add(settingsBox);
         add(createSpacer());
 
-        // --- RUN STATUS SECTION ---
         statusBox = createBaseBox("Run Status");
         JPanel statusItems = new JPanel(new GridLayout(0, 1, 0, 4));
         statusItems.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -131,13 +130,51 @@ public class AfcPluginPanel extends PluginPanel
         add(createSpacer());
         statusBox.setVisible(config.showPanelStats());
 
-        // --- SAFE BANKING GUIDE (DROPDOWN) ---
+        hiscoresBox = createBaseBox("Global Lap Hiscores");
+        hiscoresContainer = new JPanel();
+        hiscoresContainer.setLayout(new BoxLayout(hiscoresContainer, BoxLayout.Y_AXIS));
+        hiscoresContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
+        JLabel loadingLabel = new JLabel("Loading hiscores...");
+        loadingLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        loadingLabel.setFont(FontManager.getRunescapeSmallFont());
+        loadingLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        hiscoresContainer.add(loadingLabel);
+
+        JPanel btnPanel = new JPanel(new GridLayout(1, 2, 4, 0));
+        btnPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        btnPanel.setBorder(new EmptyBorder(4, 0, 0, 0));
+
+        JButton refreshBtn = new JButton("Refresh");
+        refreshBtn.setFont(FontManager.getRunescapeSmallFont());
+        refreshBtn.setFocusable(false);
+        refreshBtn.addActionListener(e -> {
+            hiscoresContainer.removeAll();
+            hiscoresContainer.add(loadingLabel);
+            hiscoresContainer.revalidate();
+            hiscoresContainer.repaint();
+            if (refreshHiscoresCallback != null) refreshHiscoresCallback.run();
+        });
+
+        JButton syncBtn = new JButton("Force Sync");
+        syncBtn.setFont(FontManager.getRunescapeSmallFont());
+        syncBtn.setFocusable(false);
+        syncBtn.addActionListener(e -> {
+            if (forceSyncCallback != null) forceSyncCallback.run();
+        });
+
+        btnPanel.add(refreshBtn);
+        btnPanel.add(syncBtn);
+
+        hiscoresBox.add(hiscoresContainer, BorderLayout.CENTER);
+        hiscoresBox.add(btnPanel, BorderLayout.SOUTH);
+        add(hiscoresBox);
+        add(createSpacer());
+        hiscoresBox.setVisible(config.showHiscores());
+
         JPanel bankingBox = new JPanel(new BorderLayout());
         bankingBox.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        bankingBox.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
-                new EmptyBorder(8, 8, 8, 8)
-        ));
+        bankingBox.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1), new EmptyBorder(8, 8, 8, 8)));
 
         JPanel bankingHeader = new JPanel(new BorderLayout());
         bankingHeader.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -171,26 +208,29 @@ public class AfcPluginPanel extends PluginPanel
         add(bankingBox);
         add(createSpacer());
 
-        // --- PVP TRACKER SECTION ---
         JPanel pvpBox = createBaseBox("PvP Encounters");
         pvpContainer = new JPanel();
         pvpContainer.setLayout(new BoxLayout(pvpContainer, BoxLayout.Y_AXIS));
         pvpContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-        JButton resetBtn = new JButton("Reset PvP Log");
-        resetBtn.setFont(FontManager.getRunescapeSmallFont());
-        resetBtn.setFocusable(false);
-        resetBtn.addActionListener(e -> {
+        JButton pvpResetBtn = new JButton("Reset PvP Log");
+        pvpResetBtn.setFont(FontManager.getRunescapeSmallFont());
+        pvpResetBtn.setFocusable(false);
+        pvpResetBtn.addActionListener(e -> {
             if (resetPvPCallback != null) resetPvPCallback.run();
         });
 
         pvpBox.add(pvpContainer, BorderLayout.CENTER);
-        pvpBox.add(resetBtn, BorderLayout.SOUTH);
+        pvpBox.add(pvpResetBtn, BorderLayout.SOUTH);
         add(pvpBox);
     }
 
     public void setResetPvPCallback(Runnable callback) { this.resetPvPCallback = callback; }
+    public void setRefreshHiscoresCallback(Runnable callback) { this.refreshHiscoresCallback = callback; }
+    public void setForceSyncCallback(Runnable callback) { this.forceSyncCallback = callback; }
+
     public void togglePanelStats(boolean visible) { statusBox.setVisible(visible); }
+    public void toggleHiscores(boolean visible) { hiscoresBox.setVisible(visible); }
 
     public void rebuildGearList()
     {
@@ -262,7 +302,6 @@ public class AfcPluginPanel extends PluginPanel
     {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Auto-Retaliate Check
                 if (config.prefAutoRetaliate() == AfcToolsConfig.RetaliateOption.IGNORE) {
                     autoRetaliateLabel.setText("- Auto-Retaliate: Ignored");
                     autoRetaliateLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
@@ -273,11 +312,9 @@ public class AfcPluginPanel extends PluginPanel
                     autoRetaliateLabel.setForeground((isOff == wantsOff) ? Color.GREEN : Color.RED);
                 }
 
-                // Attack Options Check
                 processAttackOption(playerAttackLabel, "- Player Attack: ", playerAttackState, config.prefPlayerAttack());
                 processAttackOption(npcAttackLabel, "- NPC Attack: ", npcAttackState, config.prefNpcAttack());
 
-                // Skull Prevention Check
                 if (config.prefSkullPrevention() == AfcToolsConfig.SkullPreventionOption.IGNORE) {
                     skullPreventionLabel.setText("- Skull Prevention: Ignored");
                     skullPreventionLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
@@ -353,6 +390,48 @@ public class AfcPluginPanel extends PluginPanel
                 else if (value >= 1500000) lootLabel.setForeground(Color.ORANGE);
                 else lootLabel.setForeground(Color.WHITE);
             }
+        });
+    }
+
+    public void updateHiscores(List<HiscoresManager.HiscoreEntry> hiscores)
+    {
+        SwingUtilities.invokeLater(() -> {
+            hiscoresContainer.removeAll();
+
+            if (hiscores == null || hiscores.isEmpty())
+            {
+                JLabel errorLabel = new JLabel("No data available yet.");
+                errorLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+                errorLabel.setFont(FontManager.getRunescapeSmallFont());
+                errorLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+                hiscoresContainer.add(errorLabel);
+            }
+            else
+            {
+                int rank = 1;
+                for (HiscoresManager.HiscoreEntry entry : hiscores)
+                {
+                    JPanel row = new JPanel(new BorderLayout());
+                    row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                    row.setBorder(new EmptyBorder(3, 3, 3, 3));
+
+                    JLabel nameLabel = new JLabel(rank + ". " + entry.getUsername());
+                    nameLabel.setFont(FontManager.getRunescapeSmallFont());
+                    nameLabel.setForeground(rank <= 3 ? Color.ORANGE : Color.WHITE);
+
+                    JLabel lapLabel = new JLabel(entry.getLaps() + " Laps");
+                    lapLabel.setFont(FontManager.getRunescapeSmallFont());
+                    lapLabel.setForeground(Color.GREEN);
+
+                    row.add(nameLabel, BorderLayout.WEST);
+                    row.add(lapLabel, BorderLayout.EAST);
+                    hiscoresContainer.add(row);
+                    rank++;
+                }
+            }
+
+            hiscoresContainer.revalidate();
+            hiscoresContainer.repaint();
         });
     }
 

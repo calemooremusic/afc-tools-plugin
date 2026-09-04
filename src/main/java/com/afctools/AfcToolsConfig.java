@@ -4,6 +4,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Range;
 
 @ConfigGroup("afctools")
 public interface AfcToolsConfig extends Config
@@ -20,8 +21,15 @@ public interface AfcToolsConfig extends Config
 	@ConfigItem(keyName = "enableHud", name = "Enable On-Screen HUD", description = "Shows the glass tracker overlay", section = viewSection, position = 1)
 	default boolean enableHud() { return true; }
 
-	@ConfigItem(keyName = "showPanelStats", name = "Show Panel Stats", description = "Displays trackers in the side panel", section = viewSection, position = 2)
+	@Range(min = 50, max = 200)
+	@ConfigItem(keyName = "hudScale", name = "HUD Scale (%)", description = "Scale the size of the glass tracker overlay", section = viewSection, position = 2)
+	default int hudScale() { return 100; }
+
+	@ConfigItem(keyName = "showPanelStats", name = "Show Panel Stats", description = "Displays trackers in the side panel", section = viewSection, position = 3)
 	default boolean showPanelStats() { return true; }
+
+	@ConfigItem(keyName = "showHiscores", name = "Show Lap Hiscores", description = "Displays the global lap leaderboard in the side panel", section = viewSection, position = 4)
+	default boolean showHiscores() { return true; }
 
 	@ConfigItem(keyName = "customGearList", name = "Custom Gear List", description = "Enter custom gear/items separated by commas or newlines", section = checklistSection, position = 1)
 	default String customGearList() { return "<font color='red'>Destroy looting bag in bank</font>\nSkullable Ranged gear\nXbow and ammo\nPhoenix necklace\nPots/food\nAnti Venom\nKnife\n150k for gate"; }

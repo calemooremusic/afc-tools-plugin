@@ -14,6 +14,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
@@ -38,7 +39,13 @@ public class AfcToolsPlugin extends Plugin
 	private Client client;
 
 	@Inject
+	private ClientThread clientThread;
+
+	@Inject
 	private ClientToolbar clientToolbar;
+
+	@Inject
+	private ConfigManager configManager;
 
 	@Inject
 	private AfcToolsConfig config;
@@ -60,6 +67,9 @@ public class AfcToolsPlugin extends Plugin
 
 	@Inject
 	private AfcTrackerOverlay trackerOverlay;
+
+	@Inject
+	private HiscoresManager hiscoresManager;
 
 	private NavigationButton navButton;
 	private AfcPluginPanel panel;
@@ -95,6 +105,8 @@ public class AfcToolsPlugin extends Plugin
 			final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
 
 			panel.setResetPvPCallback(() -> pkLogManager.reset());
+			panel.setRefreshHiscoresCallback(this::fetchHiscores);
+			panel.setForceSyncCallback(this::forceSyncLaps);
 
 			ticketLootManager.setPlugin(this);
 			pkLogManager.setPluginPanel(panel);
@@ -113,6 +125,8 @@ public class AfcToolsPlugin extends Plugin
 			if (trackerOverlay != null) overlayManager.add(trackerOverlay);
 
 			if (client.getGameState() == GameState.LOGGED_IN) updateSafetySettings();
+
+			fetchHiscores();
 		}
 		catch (Exception e)
 		{
@@ -128,6 +142,56 @@ public class AfcToolsPlugin extends Plugin
 		eventBus.unregister(pkLogManager);
 		overlayManager.remove(tileMarkerOverlay);
 		if (trackerOverlay != null) overlayManager.remove(trackerOverlay);
+	}
+
+	private void fetchHiscores()
+	{
+		hiscoresManager.fetchHiscores(hiscores -> {
+			if (panel != null) panel.updateHiscores(hiscores);
+		});
+	}
+
+	private void forceSyncLaps()
+	{
+		clientThread.invokeLater(() ->
+		{
+			if (client.getLocalPlayer() == null)
+			{
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=ff0000>Wilderness Agility Tool:</col> Please log in to sync your laps.", null);
+				return;
+			}
+
+			try
+			{
+				String[] possibleKeys = {"wilderness agility", "wilderness agility course", "wilderness agility ticket"};
+				Integer laps = null;
+
+				for (String key : possibleKeys)
+				{
+					// Check the modern RSProfile specific config first
+					laps = configManager.getRSProfileConfiguration("killcount", key, Integer.class);
+					if (laps != null && laps > 0) break;
+
+					// Fallback to legacy global config
+					laps = configManager.getConfiguration("killcount", key, Integer.class);
+					if (laps != null && laps > 0) break;
+				}
+
+				if (laps != null && laps > 0)
+				{
+					hiscoresManager.submitLapCount(client.getLocalPlayer().getName(), laps);
+					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=00ff00>Wilderness Agility Tool:</col> Found " + laps + " saved laps in RuneLite. Syncing to Hiscores...", null);
+					return;
+				}
+			}
+			catch (Exception e)
+			{
+				log.debug("Failed to parse laps from config", e);
+			}
+
+			// Adjusted error message since chat commands are no longer supported for syncing
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=ff0000>Wilderness Agility Tool:</col> Direct memory scan failed. Please complete one physical lap so RuneLite can track your score!", null);
+		});
 	}
 
 	private void updateSafetySettings()
@@ -150,18 +214,19 @@ public class AfcToolsPlugin extends Plugin
 			else if (event.getKey().equals("customSettingsList")) panel.rebuildSettingsList();
 			else if (event.getKey().equals("streamerModeLoot") && client.getGameState() == GameState.LOGGED_IN) panel.updateLootValue(lootingBagValue);
 			else if (event.getKey().equals("showPanelStats")) panel.togglePanelStats(config.showPanelStats());
+			else if (event.getKey().equals("showHiscores")) panel.toggleHiscores(config.showHiscores());
 		}
 	}
 
 	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
-		if (!config.fallTrackerEnabled()) return;
+		String rawMsg = Text.removeTags(event.getMessage()).replace('\u00A0', ' ').toLowerCase();
 
-		if (event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM)
+		// Track Course Falls (Only triggers on raw game messages)
+		if (config.fallTrackerEnabled() && (event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM))
 		{
-			String message = Text.removeTags(event.getMessage()).toLowerCase();
-			if (FALL_MESSAGES.stream().anyMatch(message::contains))
+			if (FALL_MESSAGES.stream().anyMatch(rawMsg::contains))
 			{
 				sessionFalls++;
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Ouch! Session Falls: " + sessionFalls, null);
